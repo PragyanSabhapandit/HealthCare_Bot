@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthCare Assistant - Hospital Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(185deg, #667eea 10%, #78ea66 90%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #667eea transparent;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .message.bot {
+            flex-direction: row;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(165deg, #667eea, #764ba2);
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(165deg, #4facfe, #00f2fe);
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 15px 18px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 0.95em;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.bot .message-bubble {
+            background: linear-gradient(135deg, #f8f9ff, #e6f0ff);
+            border-bottom-left-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .chat-input input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .appointment-card {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 10px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        .appointment-button {
+            background: white;
+            color: #4facfe;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .appointment-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 15px 18px;
+            background: linear-gradient(135deg, #f8f9ff, #e6f0ff);
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            max-width: 80px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typing 1.5s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 90vh;
+                margin: 10px;
+            }
+
+            .chat-header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🏥 HealthCare Assistant</h1>
+            <p>Your AI Medical Companion</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="message-bubble">
+                    Hello! I'm your healthcare assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start with your name - what should I call you?
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-container">
+                <input type="text" id="messageInput" placeholder="Type your message here..." maxlength="200">
+                <button class="send-button" id="sendButton">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m22 2-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Kotlin-inspired JavaScript implementation
+        class HospitalChatbot {
+            constructor() {
+                this.conversationCount = 0;
+                this.maxConversations = 10;
+                this.patientData = {
+                    name: '',
+                    age: '',
+                    symptoms: [],
+                    severity: '',
+                    history: ''
+                };
+                this.currentStep = 0;
+                this.chatSteps = [
+                    { question: "Nice to meet you, {name}! How old are you?", collectsData: 'age' },
+                    { question: "What symptoms are you experiencing today? Please describe them.", collectsData: 'symptoms' },
+                    { question: "On a scale of 1-10, how would you rate the severity of your symptoms?", collectsData: 'severity' },
+                    { question: "Do you have any chronic medical conditions or take regular medications?", collectsData: 'history' },
+                    { question: "How long have you been experiencing these symptoms?", collectsData: 'duration' },
+                    { question: "Have you experienced these symptoms before?", collectsData: 'recurring' },
+                    { question: "Are you currently taking any medications for these symptoms?", collectsData: 'medications' },
+                    { question: "Do you have any allergies to medications?", collectsData: 'allergies' },
+                    { question: "Is there anything else about your symptoms that concerns you?", collectsData: 'concerns' }
+                ];
+                this.initializeChat();
+            }
+
+            initializeChat() {
+                const sendButton = document.getElementById('sendButton');
+                const messageInput = document.getElementById('messageInput');
+                
+                sendButton.addEventListener('click', () => this.sendMessage());
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+                
+                this.updateProgress();
+            }
+
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+                
+                if (message === '') return;
+
+                this.addMessage(message, 'user');
+                input.value = '';
+                
+                this.conversationCount++;
+                this.updateProgress();
+                
+                if (this.conversationCount === 1) {
+                    this.patientData.name = message;
+                }
+                
+                if (this.conversationCount <= this.maxConversations) {
+                    this.collectPatientData(message);
+                    setTimeout(() => this.generateBotResponse(), 1500);
+                } else {
+                    this.showAppointmentRecommendation();
+                }
+            }
+
+            collectPatientData(message) {
+                const currentStepData = this.chatSteps[this.currentStep - 1];
+                if (currentStepData && currentStepData.collectsData) {
+                    this.patientData[currentStepData.collectsData] = message;
+                }
+            }
+
+            generateBotResponse() {
+                this.showTypingIndicator();
+                
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+                    
+                    if (this.conversationCount >= this.maxConversations) {
+                        this.showAppointmentRecommendation();
+                        return;
+                    }
+
+                    let response = '';
+                    
+                    if (this.currentStep < this.chatSteps.length) {
+                        response = this.chatSteps[this.currentStep].question.replace('{name}', this.patientData.name);
+                        this.currentStep++;
+                    } else {
+                        // Generate contextual responses based on conversation
+                        const responses = [
+                            "Thank you for that information. It helps me understand your situation better.",
+                            "I see. That's important information for assessment.",
+                            "Based on what you've told me, I'm gathering a comprehensive picture.",
+                            "Your symptoms are being carefully noted for proper evaluation."
+                        ];
+                        response = responses[Math.floor(Math.random() * responses.length)];
+                    }
+                    
+                    this.addMessage(response, 'bot');
+                }, 1000);
+            }
+
+            showAppointmentRecommendation() {
+                this.showTypingIndicator();
+                
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+                    
+                    const recommendation = this.generateAppointmentRecommendation();
+                    this.addMessage(recommendation, 'bot');
+                    
+                    setTimeout(() => {
+                        this.addAppointmentCard();
+                    }, 1000);
+                }, 2000);
+            }
+
+            generateAppointmentRecommendation() {
+                const name = this.patientData.name || 'there';
+                const severity = parseInt(this.patientData.severity) || 5;
+                
+                let urgency = '';
+                let specialist = '';
+                
+                if (severity >= 8) {
+                    urgency = 'urgent';
+                    specialist = 'Emergency Medicine';
+                } else if (severity >= 6) {
+                    urgency = 'priority';
+                    specialist = 'Internal Medicine';
+                } else {
+                    urgency = 'routine';
+                    specialist = 'General Practice';
+                }
+                
+                return `Thank you for sharing your symptoms with me, ${name}. Based on our conversation, I recommend scheduling a ${urgency} appointment with our ${specialist} department. Our medical professionals will be able to provide you with a thorough examination and appropriate treatment plan.`;
+            }
+
+            addAppointmentCard() {
+                const messagesDiv = document.getElementById('chatMessages');
+                const appointmentCard = document.createElement('div');
+                appointmentCard.className = 'message bot';
+                appointmentCard.innerHTML = `
+                    <div class="message-avatar">📅</div>
+                    <div class="appointment-card">
+                        <h3>🏥 Schedule Your Appointment</h3>
+                        <p>Ready to get the care you need?</p>
+                        <button class="appointment-button" onclick="scheduleAppointment()">
+                            Book Appointment Now
+                        </button>
+                    </div>
+                `;
+                messagesDiv.appendChild(appointmentCard);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            addMessage(text, sender) {
+                const messagesDiv = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = sender === 'bot' ? '🤖' : '👤';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-bubble">${text}</div>
+                `;
+                
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                const messagesDiv = document.getElementById('chatMessages');
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message bot';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="message-avatar">🤖</div>
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                messagesDiv.appendChild(typingDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            updateProgress() {
+                const progressFill = document.getElementById('progressFill');
+                const percentage = (this.conversationCount / this.maxConversations) * 100;
+                progressFill.style.width = `${Math.min(percentage, 100)}%`;
+            }
+        }
+
+        // Global function for appointment booking
+        function scheduleAppointment() {
+            alert('🎉 Appointment booking feature activated!\n\nIn a real application, this would:\n• Connect to hospital scheduling system\n• Show available time slots\n• Allow date/time selection\n• Send confirmation details\n\nThank you for using HealthCare Assistant!');
+        }
+
+        // Initialize the chatbot when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new HospitalChatbot();
+        });
+    </script>
+</body>
+</html>
